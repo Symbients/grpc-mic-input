@@ -5,7 +5,7 @@ import warnings
 
 from orchestrator.v1 import audio_input_pb2 as orchestrator_dot_v1_dot_audio__input__pb2
 
-GRPC_GENERATED_VERSION = '1.76.0'
+GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
 _version_not_supported = False
 
@@ -26,8 +26,7 @@ if _version_not_supported:
 
 
 class AudioInputServiceStub(object):
-    """Audio input service for capturing audio
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def __init__(self, channel):
         """Constructor.
@@ -43,12 +42,10 @@ class AudioInputServiceStub(object):
 
 
 class AudioInputServiceServicer(object):
-    """Audio input service for capturing audio
-    """
+    """Missing associated documentation comment in .proto file."""
 
     def Listen(self, request, context):
-        """Listen for audio from the input device, streaming chunks back to the client
-        """
+        """Missing associated documentation comment in .proto file."""
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -70,8 +67,7 @@ def add_AudioInputServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class AudioInputService(object):
-    """Audio input service for capturing audio
-    """
+    """Missing associated documentation comment in .proto file."""
 
     @staticmethod
     def Listen(request,

@@ -9,7 +9,6 @@ ESP32s register on port 8888 and receive audio on port 7777.
 """
 
 import asyncio
-import struct
 import logging
 import grpc
 import websockets
@@ -134,15 +133,13 @@ async def grpc_audio_stream():
 
         chunk_count = 0
         async for captured_chunk in stub.Listen(request):
-            chunk = captured_chunk.chunk
-
-            # Reinterpret float32 values back to raw int16 PCM bytes
-            pcm_data = struct.pack(f'{len(chunk.samples)}f', *chunk.samples)
+            # Forward raw PCM bytes directly — no conversion needed
+            pcm_data = captured_chunk.chunk.audio_data
 
             sent = await broadcast_to_esps(pcm_data)
             chunk_count += 1
 
-            if chunk_count % 100 == 0:
+            if chunk_count % 500 == 0:
                 logging.info(
                     f"Forwarded {chunk_count} chunks, last sent to {sent} ESP(s), "
                     f"chunk size: {len(pcm_data)} bytes"

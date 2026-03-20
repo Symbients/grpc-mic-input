@@ -1,0 +1,19 @@
+syntax = "proto3";
+package orchestrator.v1;
+
+message SpeakerInfo {
+  string id = 1;
+  string name = 2;
+  string matching_id = 3;
+}
+
+message AudioConfig {
+  uint32 sample_rate = 1;
+  uint32 channels = 2;
+}
+
+message AudioChunk {
+  bytes audio_data = 4;
+  uint32 sequence = 2;
+  bool is_final = 3;
+}

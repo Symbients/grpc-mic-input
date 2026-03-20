@@ -1,0 +1,16 @@
+syntax = "proto3";
+package orchestrator.v1;
+
+import "orchestrator/v1/common.proto";
+
+message ListenRequest {
+  AudioConfig config = 1;
+}
+
+message CapturedAudioChunk {
+  AudioChunk chunk = 1;
+}
+
+service AudioInputService {
+  rpc Listen(ListenRequest) returns (stream CapturedAudioChunk);
+}
