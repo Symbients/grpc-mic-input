@@ -12,7 +12,6 @@ import asyncio
 import struct
 import logging
 import grpc
-import numpy as np
 import websockets
 
 from orchestrator.v1 import audio_input_pb2, audio_input_pb2_grpc
@@ -136,10 +135,9 @@ async def grpc_audio_stream():
         chunk_count = 0
         async for captured_chunk in stub.Listen(request):
             chunk = captured_chunk.chunk
-            samples = np.array(chunk.samples, dtype=np.float32)
 
-            # Convert float32 [-1.0, 1.0] back to int16 PCM bytes
-            pcm_data = (samples * 32767).astype(np.int16).tobytes()
+            # Reinterpret float32 values back to raw int16 PCM bytes
+            pcm_data = struct.pack(f'{len(chunk.samples)}f', *chunk.samples)
 
             sent = await broadcast_to_esps(pcm_data)
             chunk_count += 1

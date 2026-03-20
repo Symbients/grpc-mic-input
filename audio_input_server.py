@@ -7,7 +7,7 @@ Listens on port 6666 following the AudioInputService specification.
 
 import asyncio
 import pyaudio
-import numpy as np
+import struct
 from concurrent import futures
 import grpc
 
@@ -51,23 +51,21 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
             sequence = 0
             try:
                 while True:
-                    # Read audio data from mic
+                    # Read raw int16 PCM bytes from mic
                     data = stream.read(chunk_size, exception_on_overflow=False)
 
-                    # Convert bytes to numpy array (int16)
-                    audio_data = np.frombuffer(data, dtype=np.int16)
+                    # Pack raw PCM bytes as float pairs for efficient transport:
+                    # Every 4 bytes of PCM data (2 int16 samples) is reinterpreted
+                    # as a single float32 value. This uses the repeated float field
+                    # as a raw byte transport, avoiding per-sample Python overhead.
+                    raw_floats = struct.unpack(f'{len(data) // 4}f', data)
 
-                    # Normalize to float32 in range [-1.0, 1.0]
-                    samples = audio_data.astype(np.float32) / 32768.0
-
-                    # Create AudioChunk
                     chunk = common_pb2.AudioChunk(
-                        samples=samples.tolist(),
+                        samples=raw_floats,
                         sequence=sequence,
                         is_final=False
                     )
 
-                    # Create CapturedAudioChunk and yield
                     captured_chunk = audio_input_pb2.CapturedAudioChunk(chunk=chunk)
                     yield captured_chunk
 
