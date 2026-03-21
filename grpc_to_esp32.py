@@ -106,16 +106,50 @@ async def send_mode_to_all_esps(mode):
                 logging.error(f"Error sending mode to ESP {agent['id']}: {e}")
 
 
+async def grpc_receiver(stub, audio_queue):
+    """Receive audio from gRPC and always keep only the latest chunk."""
+    request = audio_input_pb2.ListenRequest(
+        config={"sample_rate": 24000, "channels": 1}
+    )
+
+    chunk_count = 0
+    async for captured_chunk in stub.Listen(request):
+        pcm_data = captured_chunk.chunk.audio_data
+        chunk_count += 1
+
+        # Drop any old chunk and replace with the latest
+        while not audio_queue.empty():
+            try:
+                audio_queue.get_nowait()
+            except asyncio.QueueEmpty:
+                break
+        audio_queue.put_nowait(pcm_data)
+
+        if chunk_count % 500 == 0:
+            logging.info(f"Received {chunk_count} chunks from gRPC")
+
+
+async def esp_broadcaster(audio_queue):
+    """Continuously send the latest audio chunk to ESP32s."""
+    chunk_count = 0
+    while True:
+        pcm_data = await audio_queue.get()
+        sent = await broadcast_to_esps(pcm_data)
+        chunk_count += 1
+
+        if chunk_count % 500 == 0:
+            logging.info(
+                f"Broadcast {chunk_count} chunks to {sent} ESP(s), "
+                f"chunk size: {len(pcm_data)} bytes"
+            )
+
+
 async def grpc_audio_stream():
     """Connect to gRPC AudioInputService and broadcast audio to ESP32s."""
     logging.info(f"Connecting to gRPC server at {GRPC_SERVER}...")
 
     async with grpc.aio.insecure_channel(GRPC_SERVER) as channel:
         stub = audio_input_pb2_grpc.AudioInputServiceStub(channel)
-
-        request = audio_input_pb2.ListenRequest(
-            config={"sample_rate": 24000, "channels": 1}
-        )
 
         logging.info("Starting audio stream from Raspberry Pi...")
 
@@ -133,19 +167,12 @@ async def grpc_audio_stream():
             await asyncio.sleep(0.5)
         logging.info(f"{len(stream_clients)} ESP(s) connected to stream port.")
 
-        chunk_count = 0
-        async for captured_chunk in stub.Listen(request):
-            # Forward raw PCM bytes directly — no conversion needed
-            pcm_data = captured_chunk.chunk.audio_data
-
-            sent = await broadcast_to_esps(pcm_data)
-            chunk_count += 1
-
-            if chunk_count % 500 == 0:
-                logging.info(
-                    f"Forwarded {chunk_count} chunks, last sent to {sent} ESP(s), "
-                    f"chunk size: {len(pcm_data)} bytes"
-                )
+        # Run receiver and broadcaster as separate tasks
+        audio_queue = asyncio.Queue(maxsize=1)
+        await asyncio.gather(
+            grpc_receiver(stub, audio_queue),
+            esp_broadcaster(audio_queue),
+        )
 
 
 async def main():
