@@ -31,7 +31,7 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
         config = request.config
         sample_rate = config.sample_rate if config.sample_rate else 24000
         channels = config.channels if config.channels else 1
-        chunk_size = 1024  # Samples per chunk
+        chunk_size = 4096  # Samples per chunk
 
         # Initialize PyAudio
         audio = pyaudio.PyAudio()
