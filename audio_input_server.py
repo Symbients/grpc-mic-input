@@ -47,13 +47,15 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
 
             print(f"Started audio capture: {sample_rate}Hz, {channels} channel(s)")
 
+            loop = asyncio.get_event_loop()
             sequence = 0
             try:
                 while True:
-                    # Read raw int16 PCM bytes directly from mic
-                    data = stream.read(chunk_size, exception_on_overflow=False)
+                    # Run blocking mic read in a thread to not block the event loop
+                    data = await loop.run_in_executor(
+                        None, lambda: stream.read(chunk_size, exception_on_overflow=False)
+                    )
 
-                    # Send raw PCM bytes via the bytes field — zero serialization overhead
                     chunk = common_pb2.AudioChunk(
                         audio_data=data,
                         sequence=sequence,
@@ -64,9 +66,6 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
                     yield captured_chunk
 
                     sequence += 1
-
-                    # Yield to event loop to prevent blocking
-                    await asyncio.sleep(0)
 
             except asyncio.CancelledError:
                 print("Audio stream cancelled by client")

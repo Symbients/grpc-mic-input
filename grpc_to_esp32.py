@@ -71,25 +71,27 @@ async def handle_esp_stream(websocket):
 
 
 async def broadcast_to_esps(audio_data):
-    """Send audio data to all connected stream clients."""
+    """Send audio data to all connected stream clients in parallel."""
     if not stream_clients:
         return 0
 
-    sent_count = 0
-    failed = []
-    for ws in stream_clients:
+    async def send_to(ws):
         try:
             await ws.send(audio_data)
-            sent_count += 1
-        except Exception as e:
-            logging.error(f"Error sending to stream client: {e}")
-            failed.append(ws)
+            return True
+        except Exception:
+            return False
 
-    for ws in failed:
-        if ws in stream_clients:
+    # Send to all ESP32s concurrently
+    clients = list(stream_clients)
+    results = await asyncio.gather(*(send_to(ws) for ws in clients))
+
+    # Remove failed connections
+    for ws, ok in zip(clients, results):
+        if not ok and ws in stream_clients:
             stream_clients.remove(ws)
 
-    return sent_count
+    return sum(results)
 
 
 async def send_mode_to_all_esps(mode):
