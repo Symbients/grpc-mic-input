@@ -6,6 +6,7 @@ Listens on port 6666 following the AudioInputService specification.
 """
 
 import asyncio
+import struct
 import pyaudio
 from concurrent import futures
 import grpc
@@ -15,6 +16,11 @@ from orchestrator.v1 import audio_input_pb2, audio_input_pb2_grpc, common_pb2
 
 class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
     """gRPC servicer for audio input streaming."""
+
+    async def GetConfig(self, request, context):
+        """Return the audio configuration of this input device."""
+        config = common_pb2.AudioConfig(sample_rate=24000, channels=1)
+        return common_pb2.GetConfigResponse(config=config)
 
     async def Listen(self, request, context):
         """
@@ -56,8 +62,12 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
                         None, lambda: stream.read(chunk_size, exception_on_overflow=False)
                     )
 
+                    # Convert int16 PCM bytes to normalized f32 samples (-1.0..1.0)
+                    int16_samples = struct.unpack(f'<{len(data)//2}h', data)
+                    float_samples = [s / 32768.0 for s in int16_samples]
+
                     chunk = common_pb2.AudioChunk(
-                        audio_data=data,
+                        samples=float_samples,
                         sequence=sequence,
                         is_final=False
                     )

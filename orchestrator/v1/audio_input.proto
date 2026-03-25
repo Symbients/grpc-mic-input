@@ -3,14 +3,22 @@ package orchestrator.v1;
 
 import "orchestrator/v1/common.proto";
 
+// Audio input service for capturing audio
+service AudioInputService {
+  // Get the audio configuration of this input device
+  rpc GetConfig(GetConfigRequest) returns (GetConfigResponse);
+  // Listen for audio from the input device, streaming chunks back to the client
+  rpc Listen(ListenRequest) returns (stream CapturedAudioChunk);
+}
+
+// Request to start listening for audio
 message ListenRequest {
+  // Optional audio configuration (defaults to 24kHz mono if not specified)
   AudioConfig config = 1;
 }
 
+// Audio chunk captured from input device
 message CapturedAudioChunk {
+  // The audio data
   AudioChunk chunk = 1;
-}
-
-service AudioInputService {
-  rpc Listen(ListenRequest) returns (stream CapturedAudioChunk);
 }

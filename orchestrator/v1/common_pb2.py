@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1corchestrator/v1/common.proto\x12\x0forchestrator.v1\"<\n\x0bSpeakerInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0bmatching_id\x18\x03 \x01(\t\"4\n\x0b\x41udioConfig\x12\x13\n\x0bsample_rate\x18\x01 \x01(\r\x12\x10\n\x08\x63hannels\x18\x02 \x01(\r\"D\n\nAudioChunk\x12\x12\n\naudio_data\x18\x04 \x01(\x0c\x12\x10\n\x08sequence\x18\x02 \x01(\r\x12\x10\n\x08is_final\x18\x03 \x01(\x08\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x1corchestrator/v1/common.proto\x12\x0forchestrator.v1\"<\n\x0bSpeakerInfo\x12\n\n\x02id\x18\x01 \x01(\t\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x13\n\x0bmatching_id\x18\x03 \x01(\t\"4\n\x0b\x41udioConfig\x12\x13\n\x0bsample_rate\x18\x01 \x01(\r\x12\x10\n\x08\x63hannels\x18\x02 \x01(\r\"A\n\nAudioChunk\x12\x0f\n\x07samples\x18\x01 \x03(\x02\x12\x10\n\x08sequence\x18\x02 \x01(\r\x12\x10\n\x08is_final\x18\x03 \x01(\x08\"\x12\n\x10GetConfigRequest\"A\n\x11GetConfigResponse\x12,\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x1c.orchestrator.v1.AudioConfigb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,5 +36,9 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_AUDIOCONFIG']._serialized_start=111
   _globals['_AUDIOCONFIG']._serialized_end=163
   _globals['_AUDIOCHUNK']._serialized_start=165
-  _globals['_AUDIOCHUNK']._serialized_end=233
+  _globals['_AUDIOCHUNK']._serialized_end=230
+  _globals['_GETCONFIGREQUEST']._serialized_start=232
+  _globals['_GETCONFIGREQUEST']._serialized_end=250
+  _globals['_GETCONFIGRESPONSE']._serialized_start=252
+  _globals['_GETCONFIGRESPONSE']._serialized_end=317
 # @@protoc_insertion_point(module_scope)

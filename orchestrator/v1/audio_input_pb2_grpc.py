@@ -4,6 +4,7 @@ import grpc
 import warnings
 
 from orchestrator.v1 import audio_input_pb2 as orchestrator_dot_v1_dot_audio__input__pb2
+from orchestrator.v1 import common_pb2 as orchestrator_dot_v1_dot_common__pb2
 
 GRPC_GENERATED_VERSION = '1.78.0'
 GRPC_VERSION = grpc.__version__
@@ -26,7 +27,8 @@ if _version_not_supported:
 
 
 class AudioInputServiceStub(object):
-    """Missing associated documentation comment in .proto file."""
+    """Audio input service for capturing audio
+    """
 
     def __init__(self, channel):
         """Constructor.
@@ -34,6 +36,11 @@ class AudioInputServiceStub(object):
         Args:
             channel: A grpc.Channel.
         """
+        self.GetConfig = channel.unary_unary(
+                '/orchestrator.v1.AudioInputService/GetConfig',
+                request_serializer=orchestrator_dot_v1_dot_common__pb2.GetConfigRequest.SerializeToString,
+                response_deserializer=orchestrator_dot_v1_dot_common__pb2.GetConfigResponse.FromString,
+                _registered_method=True)
         self.Listen = channel.unary_stream(
                 '/orchestrator.v1.AudioInputService/Listen',
                 request_serializer=orchestrator_dot_v1_dot_audio__input__pb2.ListenRequest.SerializeToString,
@@ -42,10 +49,19 @@ class AudioInputServiceStub(object):
 
 
 class AudioInputServiceServicer(object):
-    """Missing associated documentation comment in .proto file."""
+    """Audio input service for capturing audio
+    """
+
+    def GetConfig(self, request, context):
+        """Get the audio configuration of this input device
+        """
+        context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+        context.set_details('Method not implemented!')
+        raise NotImplementedError('Method not implemented!')
 
     def Listen(self, request, context):
-        """Missing associated documentation comment in .proto file."""
+        """Listen for audio from the input device, streaming chunks back to the client
+        """
         context.set_code(grpc.StatusCode.UNIMPLEMENTED)
         context.set_details('Method not implemented!')
         raise NotImplementedError('Method not implemented!')
@@ -53,6 +69,11 @@ class AudioInputServiceServicer(object):
 
 def add_AudioInputServiceServicer_to_server(servicer, server):
     rpc_method_handlers = {
+            'GetConfig': grpc.unary_unary_rpc_method_handler(
+                    servicer.GetConfig,
+                    request_deserializer=orchestrator_dot_v1_dot_common__pb2.GetConfigRequest.FromString,
+                    response_serializer=orchestrator_dot_v1_dot_common__pb2.GetConfigResponse.SerializeToString,
+            ),
             'Listen': grpc.unary_stream_rpc_method_handler(
                     servicer.Listen,
                     request_deserializer=orchestrator_dot_v1_dot_audio__input__pb2.ListenRequest.FromString,
@@ -67,7 +88,35 @@ def add_AudioInputServiceServicer_to_server(servicer, server):
 
  # This class is part of an EXPERIMENTAL API.
 class AudioInputService(object):
-    """Missing associated documentation comment in .proto file."""
+    """Audio input service for capturing audio
+    """
+
+    @staticmethod
+    def GetConfig(request,
+            target,
+            options=(),
+            channel_credentials=None,
+            call_credentials=None,
+            insecure=False,
+            compression=None,
+            wait_for_ready=None,
+            timeout=None,
+            metadata=None):
+        return grpc.experimental.unary_unary(
+            request,
+            target,
+            '/orchestrator.v1.AudioInputService/GetConfig',
+            orchestrator_dot_v1_dot_common__pb2.GetConfigRequest.SerializeToString,
+            orchestrator_dot_v1_dot_common__pb2.GetConfigResponse.FromString,
+            options,
+            channel_credentials,
+            insecure,
+            call_credentials,
+            compression,
+            wait_for_ready,
+            timeout,
+            metadata,
+            _registered_method=True)
 
     @staticmethod
     def Listen(request,

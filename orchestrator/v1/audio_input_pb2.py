@@ -25,7 +25,7 @@ _sym_db = _symbol_database.Default()
 from orchestrator.v1 import common_pb2 as orchestrator_dot_v1_dot_common__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!orchestrator/v1/audio_input.proto\x12\x0forchestrator.v1\x1a\x1corchestrator/v1/common.proto\"=\n\rListenRequest\x12,\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x1c.orchestrator.v1.AudioConfig\"@\n\x12\x43\x61pturedAudioChunk\x12*\n\x05\x63hunk\x18\x01 \x01(\x0b\x32\x1b.orchestrator.v1.AudioChunk2d\n\x11\x41udioInputService\x12O\n\x06Listen\x12\x1e.orchestrator.v1.ListenRequest\x1a#.orchestrator.v1.CapturedAudioChunk0\x01\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n!orchestrator/v1/audio_input.proto\x12\x0forchestrator.v1\x1a\x1corchestrator/v1/common.proto\"=\n\rListenRequest\x12,\n\x06\x63onfig\x18\x01 \x01(\x0b\x32\x1c.orchestrator.v1.AudioConfig\"@\n\x12\x43\x61pturedAudioChunk\x12*\n\x05\x63hunk\x18\x01 \x01(\x0b\x32\x1b.orchestrator.v1.AudioChunk2\xb8\x01\n\x11\x41udioInputService\x12R\n\tGetConfig\x12!.orchestrator.v1.GetConfigRequest\x1a\".orchestrator.v1.GetConfigResponse\x12O\n\x06Listen\x12\x1e.orchestrator.v1.ListenRequest\x1a#.orchestrator.v1.CapturedAudioChunk0\x01\x62\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -36,6 +36,6 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_LISTENREQUEST']._serialized_end=145
   _globals['_CAPTUREDAUDIOCHUNK']._serialized_start=147
   _globals['_CAPTUREDAUDIOCHUNK']._serialized_end=211
-  _globals['_AUDIOINPUTSERVICE']._serialized_start=213
-  _globals['_AUDIOINPUTSERVICE']._serialized_end=313
+  _globals['_AUDIOINPUTSERVICE']._serialized_start=214
+  _globals['_AUDIOINPUTSERVICE']._serialized_end=398
 # @@protoc_insertion_point(module_scope)

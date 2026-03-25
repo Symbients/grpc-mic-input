@@ -13,7 +13,17 @@ message AudioConfig {
 }
 
 message AudioChunk {
-  bytes audio_data = 4;
+  // PCM f32 samples (mono, 24kHz), normalized to -1.0..1.0
+  repeated float samples = 1;
   uint32 sequence = 2;
   bool is_final = 3;
+}
+
+// Request to get audio configuration
+message GetConfigRequest {}
+
+// Response containing audio configuration
+message GetConfigResponse {
+  // The audio configuration
+  AudioConfig config = 1;
 }
