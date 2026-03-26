@@ -6,6 +6,8 @@ Listens on port 6666 following the AudioInputService specification.
 """
 
 import asyncio
+import os
+import sys
 import struct
 import ctypes
 import pyaudio
@@ -30,6 +32,20 @@ try:
     asound.snd_lib_error_set_handler(_c_null_error_handler)
 except OSError:
     pass  # Not on Linux / ALSA not available
+
+
+def _create_pyaudio():
+    """Create PyAudio instance with stderr suppressed to hide JACK warnings."""
+    devnull = os.open(os.devnull, os.O_WRONLY)
+    old_stderr = os.dup(2)
+    os.dup2(devnull, 2)
+    try:
+        audio = pyaudio.PyAudio()
+    finally:
+        os.dup2(old_stderr, 2)
+        os.close(devnull)
+        os.close(old_stderr)
+    return audio
 
 
 class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
@@ -57,8 +73,13 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
         channels = config.channels if config.channels else 1
         chunk_size = 4096  # Samples per chunk
 
-        # Initialize PyAudio
-        audio = pyaudio.PyAudio()
+        audio = _create_pyaudio()
+        queue = asyncio.Queue()
+        loop = asyncio.get_event_loop()
+
+        def _audio_callback(in_data, frame_count, time_info, status):
+            loop.call_soon_threadsafe(queue.put_nowait, in_data)
+            return (None, pyaudio.paContinue)
 
         try:
             stream = audio.open(
@@ -66,21 +87,17 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
                 channels=channels,
                 rate=sample_rate,
                 input=True,
-                frames_per_buffer=chunk_size
+                frames_per_buffer=chunk_size,
+                stream_callback=_audio_callback
             )
 
             print(f"Started audio capture: {sample_rate}Hz, {channels} channel(s)")
 
-            loop = asyncio.get_event_loop()
             sequence = 0
             try:
                 while True:
-                    # Run blocking mic read in a thread to not block the event loop
-                    data = await loop.run_in_executor(
-                        None, lambda: stream.read(chunk_size, exception_on_overflow=False)
-                    )
+                    data = await queue.get()
 
-                    # Convert int16 PCM bytes to normalized f32 samples (-1.0..1.0)
                     int16_samples = struct.unpack(f'<{len(data)//2}h', data)
                     float_samples = [s / 32768.0 for s in int16_samples]
 
@@ -90,9 +107,7 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
                         is_final=False
                     )
 
-                    captured_chunk = audio_input_pb2.CapturedAudioChunk(chunk=chunk)
-                    yield captured_chunk
-
+                    yield audio_input_pb2.CapturedAudioChunk(chunk=chunk)
                     sequence += 1
 
             except asyncio.CancelledError:
@@ -105,9 +120,6 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
             print(f"Error in audio capture: {e}")
             await context.abort(grpc.StatusCode.INTERNAL, f"Audio error: {e}")
         finally:
-            # Brief pause lets the executor thread finish its blocked read
-            # before we destroy the PyAudio instance (avoids segfault)
-            await asyncio.sleep(0.2)
             audio.terminate()
 
 
