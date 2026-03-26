@@ -7,11 +7,29 @@ Listens on port 6666 following the AudioInputService specification.
 
 import asyncio
 import struct
+import ctypes
 import pyaudio
 from concurrent import futures
 import grpc
 
 from orchestrator.v1 import audio_input_pb2, audio_input_pb2_grpc, common_pb2
+
+
+# Suppress noisy ALSA/JACK warnings on Linux (especially Raspberry Pi)
+# Must be called before any PyAudio instantiation
+try:
+    _ERROR_HANDLER_FUNC = ctypes.CFUNCTYPE(
+        None, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p, ctypes.c_int, ctypes.c_char_p
+    )
+
+    def _null_error_handler(filename, line, function, err, fmt):
+        pass
+
+    _c_null_error_handler = _ERROR_HANDLER_FUNC(_null_error_handler)
+    asound = ctypes.cdll.LoadLibrary('libasound.so.2')
+    asound.snd_lib_error_set_handler(_c_null_error_handler)
+except OSError:
+    pass  # Not on Linux / ALSA not available
 
 
 class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
@@ -87,6 +105,9 @@ class AudioInputServicer(audio_input_pb2_grpc.AudioInputServiceServicer):
             print(f"Error in audio capture: {e}")
             await context.abort(grpc.StatusCode.INTERNAL, f"Audio error: {e}")
         finally:
+            # Brief pause lets the executor thread finish its blocked read
+            # before we destroy the PyAudio instance (avoids segfault)
+            await asyncio.sleep(0.2)
             audio.terminate()
 
 
